@@ -43,9 +43,9 @@ do
 		{
 		case 1:
 		{
-			System.out.println("Enter the ObjectID to discover: ");	
+			System.out.println("Enter the ObjectID to read: ");	
 			obid=in.nextInt();	
-			System.out.println("Enter the ObjectInstanceID to discover: ");
+			System.out.println("Enter the ObjectInstanceID to read: ");
 			obinid=in.nextInt();
 			System.out.println("Enter the ResourceID to discover:\n1.ACL\n2.AccessControl Owner");
 			rid=in.nextInt();
@@ -199,19 +199,25 @@ do
 		break;
 	case 2:
 	{
-		System.out.println("There are three operations in Information reporting:\n1)Observe\n2)Notify\n3.)Cancel Observation");
+		System.out.println("There are three operations in Information reporting:\n1)Observe\n2.)Cancel Observation");
 		choice1=in.nextInt();
 		switch(choice1)
 		{
 		case 1:
 		{
-		
 			WebResource webResource = client
 					.resource("http://localhost:8080/Om/rest/bson/client/observe");
 			ClientResponse  response = webResource.type("application/json").get(ClientResponse.class);
 			String output=response.getEntity(String.class);
 			System.out.println(output);
-			
+		}break;
+		case 2:
+		{
+			WebResource webResource = client
+					.resource("http://localhost:8080/Om/rest/bson/client/cancel");
+			ClientResponse  response = webResource.type("application/json").get(ClientResponse.class);
+			String output=response.getEntity(String.class);
+			System.out.println(output);
 		}break;
 		}
 	}break;

@@ -21,6 +21,7 @@ import java.util.*;
 public class Left {
 	static Connection conn;
 	static Statement stmt;
+	static boolean observe=false;
 	
 	@GET
 	@Path("/read/{varA}/{varB}/{varC}")
@@ -59,14 +60,17 @@ public class Left {
 	{
 		
 		Class.forName("com.mysql.jdbc.Driver");
+		String notify="";
+		
 		conn=DriverManager.getConnection("jdbc:mysql://localhost/DeviceManagement","root","");
 		stmt=conn.createStatement();
 		if(z==2)
 		stmt.executeUpdate("update AccessControl set ACL="+n+" where ObjectID="+x+" and ObjectInstanceID="+y);
 		if(z==3)
 			stmt.executeUpdate("update AccessControl set AccessControlOwner="+n+" where ObjectID="+x+" and ObjectInstanceID="+y);
-		
-	return "Updated Object Instance: "+y+"\nSuccess";
+		if(observe)
+			notify="\n\nValue Update Notification\nUpdated Value: "+n;
+	return "Updated Object Instance: "+y+"\nSuccess"+notify;
 	}
 	
 	@DELETE
@@ -103,13 +107,37 @@ public class Left {
 	@GET
 	@Path("/discover/{varX}/{varY}/{varZ}")
 	public static String discover(@PathParam("varX") int x,@PathParam("varY") int y,@PathParam("varZ") int z) throws ClassNotFoundException, SQLException  
-	{
+	{	int pmin=0,pmax=0;
+		int obid,obinid,rid;
 		String g="";
 		ResultSet rt;
 		Class.forName("com.mysql.jdbc.Driver");
 		conn=DriverManager.getConnection("jdbc:mysql://localhost/DeviceManagement","root","");
 		stmt=conn.createStatement();
-		rt = stmt.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_name = 'AccessControl'");
+	
+		rt=stmt.executeQuery("select * from Attributes where ObjectID="+x);
+//		rt.moveToCurrentRow();
+		if(rt.next())
+		{
+			pmin=rt.getInt(4);
+			pmax=rt.getInt(5);	
+		}
+//	
+		rt.previous();
+		g="</"+x+">; pmin="+pmin+";pmax="+pmax;
+
+		
+		while(rt.next())
+		{
+			obid=rt.getInt(2);
+			obinid=rt.getInt(1);
+			rid=rt.getInt(3);
+			g=g+" <"+obid+"/"+obinid+"/"+rid+">, ";
+		}
+		g=g+"\n";
+	rt = stmt.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_name = 'AccessControl'");
+		
+		
 		ArrayList<String> k=new ArrayList<String>();
 		
 	 while(rt.next())
@@ -139,41 +167,19 @@ public class Left {
 	
 	@GET
 	@Path("/observe")
-	public static String observe() throws ClassNotFoundException, SQLException
+	public static String observe()
 	{
-		ResultSet rs;
-		String gh="";
-		int a,b,c,d,e,f,g,h;
-		 Class.forName("com.mysql.jdbc.Driver");
-		 
-		 conn=DriverManager.getConnection("jdbc:mysql://localhost/DeviceManagement","root","");
-		 stmt=conn.createStatement();
-		 Statement st=conn.createStatement();
-			ResultSet rt=stmt.executeQuery("select * from AccessControl");
-			a=rt.getInt(1);
-			b=rt.getInt(2);
-			c=rt.getInt(3);
-			d=rt.getInt(4);
-			while(true)
-			{
-				rs=st.executeQuery("select * from AccessControl");
-		
-				while(rs.next())
-				{
-					e=rs.getInt(1);
-					f=rs.getInt(2);
-					g=rs.getInt(3);
-					h=rs.getInt(4);
-				if((a!=e)||(b!=f)||(c!=g)||(d!=h))
-				{
-					gh="Value Change Notification";
-				}
-				}
-				if(gh.equals("Value Change Notification"))
-					return gh;
-			}
-		
-		
+		observe=true;
+		return "Success";
+	}
+	
+	
+	@GET
+	@Path("/cancel")
+	public static String cancel()
+	{
+		observe=false;
+		return "Success";
 	}
 	
 	@POST
@@ -204,13 +210,20 @@ public class Left {
 		    			c=(altitude);
 		    			c=c/1000;
 		    		}break;
+		    		default:
+		    		{
+		    			c=(altitude);
+		    			c=c/1000;	
 		    		}
-		    		return "Altitude at "+time.toString()+" is "+altitude+"\nConverted value: "+ c;
+		    		}
+		    		return "Altitude at "+time.toString()+" is "+altitude+"\nConverted value to Kilometer: "+ c;
 		}			
 		
 	return "";
 		
 	}
+	
+	
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
